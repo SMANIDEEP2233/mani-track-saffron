@@ -13,7 +13,15 @@ import { CurrencySelector, type Currency, getCurrencySymbol } from "./currency-s
 import type { Expense } from "./expense-card";
 
 interface AddExpenseFormProps {
-  onAddExpense: (expense: Omit<Expense, 'id'>) => void;
+  onAddExpense: (expense: {
+    storeName: string;
+    amount: number;
+    date: string;
+    category?: string;
+    items?: string[];
+    splitWith?: number;
+    userPortion?: number;
+  }) => void;
   onCancel?: () => void;
   currency: Currency;
 }
@@ -58,7 +66,7 @@ export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseF
     const splitWith = formData.isSplit ? parseInt(formData.splitWith) || 2 : undefined;
     const userPortion = splitWith ? amount / splitWith : undefined;
 
-    const expense: Omit<Expense, 'id'> = {
+    const expense = {
       storeName: formData.storeName,
       amount,
       date: formData.date,

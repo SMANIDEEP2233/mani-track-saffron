@@ -11,13 +11,13 @@ interface SpendingInsightsProps {
 
 export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) {
   // Calculate insights
-  const totalSpent = expenses.reduce((sum, expense) => sum + (expense.userPortion || expense.amount), 0);
+  const totalSpent = expenses.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
   const avgDaily = expenses.length > 0 ? totalSpent / Math.max(1, getDaysSinceFirstExpense(expenses)) : 0;
   
   // Top spending stores
   const storeSpending = expenses.reduce((acc, expense) => {
-    const amount = expense.userPortion || expense.amount;
-    acc[expense.storeName] = (acc[expense.storeName] || 0) + amount;
+    const amount = expense.user_portion || expense.amount;
+    acc[expense.store_name] = (acc[expense.store_name] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);
   
@@ -28,7 +28,7 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
   // Category spending
   const categorySpending = expenses.reduce((acc, expense) => {
     const category = expense.category || 'Other';
-    const amount = expense.userPortion || expense.amount;
+    const amount = expense.user_portion || expense.amount;
     acc[category] = (acc[category] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);
@@ -53,8 +53,8 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
     return expenseDate >= twoWeeksAgo && expenseDate < weekAgo;
   });
 
-  const last7DaysTotal = last7Days.reduce((sum, expense) => sum + (expense.userPortion || expense.amount), 0);
-  const previous7DaysTotal = previous7Days.reduce((sum, expense) => sum + (expense.userPortion || expense.amount), 0);
+  const last7DaysTotal = last7Days.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
+  const previous7DaysTotal = previous7Days.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
   const trendChange = previous7DaysTotal > 0 ? ((last7DaysTotal - previous7DaysTotal) / previous7DaysTotal) * 100 : 0;
 
   if (expenses.length === 0) {

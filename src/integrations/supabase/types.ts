@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          date: string
+          id: string
+          items: string[] | null
+          split_with: number | null
+          store_name: string
+          updated_at: string
+          user_id: string
+          user_portion: number | null
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          items?: string[] | null
+          split_with?: number | null
+          store_name: string
+          updated_at?: string
+          user_id: string
+          user_portion?: number | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          items?: string[] | null
+          split_with?: number | null
+          store_name?: string
+          updated_at?: string
+          user_id?: string
+          user_portion?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

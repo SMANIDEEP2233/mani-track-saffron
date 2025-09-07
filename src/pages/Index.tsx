@@ -1,166 +1,157 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Navigation } from "@/components/ui/navigation";
+import { Plus, BarChart3, Settings, Wallet, TrendingUp, LogOut } from "lucide-react";
 import { AddExpenseForm } from "@/components/add-expense-form";
 import { ExpenseCard, type Expense } from "@/components/expense-card";
 import { SpendingInsights } from "@/components/spending-insights";
 import { CurrencySelector, type Currency, formatCurrency } from "@/components/currency-selector";
-import { Plus, LayoutDashboard, BarChart3, Settings, Receipt } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import logo from "@/assets/logo.png";
+import { AuthForm } from "@/components/auth/auth-form";
+import { useExpenses } from "@/hooks/use-expenses";
+import { supabase } from "@/integrations/supabase/client";
+import logoImage from "@/assets/logo.png";
 
-const Index = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [currency, setCurrency] = useState<Currency>('INR');
-  const [expenses, setExpenses] = useState<Expense[]>([
-    // Sample data
-    {
-      id: "1",
-      storeName: "Big Bazaar",
-      amount: 1250.00,
-      date: "2024-01-15",
-      category: "Groceries",
-      items: ["Rice", "Dal", "Oil", "Vegetables"],
-    },
-    {
-      id: "2", 
-      storeName: "Swiggy",
-      amount: 450.00,
-      date: "2024-01-14",
-      category: "Food & Dining",
-      items: ["Biryani", "Raita"],
-      splitWith: 2,
-      userPortion: 225.00,
-    },
-    {
-      id: "3",
-      storeName: "Metro Station",
-      amount: 50.00,
-      date: "2024-01-14",
-      category: "Transportation",
-    }
-  ]);
-  const { toast } = useToast();
+export default function Index() {
+  // State management
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'insights' | 'settings'>('dashboard');
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('INR');
+  const { expenses, loading, user, addExpense, updateExpense, deleteExpense } = useExpenses();
 
-  const handleAddExpense = (newExpense: Omit<Expense, 'id'>) => {
-    const expense: Expense = {
-      ...newExpense,
-      id: Date.now().toString(),
-    };
-    setExpenses([expense, ...expenses]);
-    setShowAddForm(false);
+  // Show auth form if user is not logged in
+  if (!user) {
+    return <AuthForm />;
+  }
+
+  // Event handlers
+  const handleAddExpense = async (newExpense: {
+    storeName: string;
+    amount: number;
+    date: string;
+    category?: string;
+    items?: string[];
+    splitWith?: number;
+    userPortion?: number;
+  }) => {
+    await addExpense(newExpense);
+    setShowAddExpense(false);
   };
 
   const handleEditExpense = (expense: Expense) => {
-    toast({
-      title: "Edit Feature",
-      description: "Edit functionality coming soon!",
-    });
+    // TODO: Implement edit functionality
+    console.log('Edit expense:', expense);
   };
 
   const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter(exp => exp.id !== id));
-    toast({
-      title: "Expense Deleted",
-      description: "The expense has been removed successfully.",
-    });
+    deleteExpense(id);
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // Navigation items
   const navigationItems = [
-    {
-      name: "Dashboard",
-      icon: LayoutDashboard,
-      current: activeTab === "dashboard",
-      onClick: () => setActiveTab("dashboard"),
-    },
-    {
-      name: "Insights",
-      icon: BarChart3,
-      current: activeTab === "insights",
-      onClick: () => setActiveTab("insights"),
-    },
-    {
-      name: "Settings",
-      icon: Settings,
-      current: activeTab === "settings",
-      onClick: () => setActiveTab("settings"),
-    },
+    { name: 'Dashboard', tab: 'dashboard' as const, icon: Wallet },
+    { name: 'Insights', tab: 'insights' as const, icon: BarChart3 },
+    { name: 'Settings', tab: 'settings' as const, icon: Settings },
   ];
 
-  const totalSpent = expenses.reduce((sum, expense) => sum + (expense.userPortion || expense.amount), 0);
-  const thisMonth = expenses.filter(expense => {
+  // Calculate totals
+  const totalSpent = expenses.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+  const currentYear = new Date().getFullYear();
+  const monthlyExpenses = expenses.filter(expense => {
     const expenseDate = new Date(expense.date);
-    const currentMonth = new Date().getMonth();
-    return expenseDate.getMonth() === currentMonth;
+    return expenseDate.getMonth() === new Date().getMonth() && 
+           expenseDate.getFullYear() === new Date().getFullYear();
   });
-  const monthlyTotal = thisMonth.reduce((sum, expense) => sum + (expense.userPortion || expense.amount), 0);
+  const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 pb-20">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="ManiTracker" className="w-10 h-10" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <img 
+                  src={logoImage} 
+                  alt="ManiTracker Logo" 
+                  className="w-6 h-6 object-contain"
+                />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  ManiTracker
-                </h1>
-                <p className="text-xs text-muted-foreground">Smart Expense Tracking</p>
+                <h1 className="text-xl font-bold text-foreground">ManiTracker</h1>
+                <p className="text-xs text-muted-foreground">Track your expenses</p>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
               <CurrencySelector 
-                currency={currency} 
-                onCurrencyChange={setCurrency}
-                className="w-20"
+                currency={selectedCurrency} 
+                onCurrencyChange={setSelectedCurrency}
+                className="w-[100px]"
               />
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-lg font-bold text-foreground">{formatCurrency(monthlyTotal, currency)}</p>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
+          
+          {/* Monthly Summary */}
+          <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">{currentMonth} {currentYear}</span>
+              </div>
+              <span className="text-lg font-bold text-primary">
+                {formatCurrency(monthlyTotal, selectedCurrency)}
+              </span>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        {activeTab === "dashboard" && (
+      {/* Main Content */}
+      <div className="max-w-md mx-auto px-4 py-6">
+        {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <Card className="p-4 card-beautiful">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Expenses</p>
-                  <p className="text-2xl font-bold text-foreground">{expenses.length}</p>
-                </div>
+                <CardContent className="p-0 text-center">
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-lg font-bold text-foreground">{expenses.length}</p>
+                </CardContent>
               </Card>
               <Card className="p-4 card-beautiful">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="text-2xl font-bold text-primary">{formatCurrency(totalSpent, currency)}</p>
-                </div>
+                <CardContent className="p-0 text-center">
+                  <p className="text-xs text-muted-foreground">Spent</p>
+                  <p className="text-lg font-bold text-primary">{formatCurrency(totalSpent, selectedCurrency)}</p>
+                </CardContent>
               </Card>
               <Card className="p-4 card-beautiful">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Avg per Day</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {expenses.length > 0 ? formatCurrency(totalSpent / Math.max(1, 7), currency) : formatCurrency(0, currency)}
+                <CardContent className="p-0 text-center">
+                  <p className="text-xs text-muted-foreground">Avg/Day</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {expenses.length > 0 ? formatCurrency(totalSpent / Math.max(1, 7), selectedCurrency) : formatCurrency(0, selectedCurrency)}
                   </p>
-                </div>
+                </CardContent>
               </Card>
             </div>
 
             {/* Add Expense Button */}
-            {!showAddForm && (
+            {!showAddExpense && (
               <Button
-                onClick={() => setShowAddForm(true)}
+                onClick={() => setShowAddExpense(true)}
                 className="w-full button-glow"
                 size="lg"
               >
@@ -170,78 +161,78 @@ const Index = () => {
             )}
 
             {/* Add Expense Form */}
-            {showAddForm && (
+            {showAddExpense && (
               <AddExpenseForm
                 onAddExpense={handleAddExpense}
-                onCancel={() => setShowAddForm(false)}
-                currency={currency}
+                onCancel={() => setShowAddExpense(false)}
+                currency={selectedCurrency}
               />
             )}
 
             {/* Recent Expenses */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">Recent Expenses</h2>
-                <Receipt className="h-5 w-5 text-muted-foreground" />
-              </div>
+              <h2 className="text-lg font-semibold text-foreground mb-4">Recent Expenses</h2>
               
-              <div className="space-y-3">
-                {expenses.length === 0 ? (
-                  <Card className="p-8 card-beautiful text-center">
-                    <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">No Expenses Yet</h3>
-                    <p className="text-muted-foreground">Start tracking your expenses by adding your first one!</p>
-                  </Card>
-                ) : (
-                  expenses.map((expense) => (
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-muted-foreground mt-2">Loading expenses...</p>
+                </div>
+              ) : expenses.length === 0 ? (
+                <Card className="p-8 card-beautiful text-center">
+                  <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No Expenses Yet</h3>
+                  <p className="text-muted-foreground">Start tracking by adding your first expense!</p>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {expenses.map((expense) => (
                     <ExpenseCard
                       key={expense.id}
                       expense={expense}
                       onEdit={handleEditExpense}
                       onDelete={handleDeleteExpense}
-                      currency={currency}
+                      currency={selectedCurrency}
                     />
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {activeTab === "insights" && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <BarChart3 className="h-6 w-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground">Spending Insights</h2>
-            </div>
-            <SpendingInsights expenses={expenses} currency={currency} />
-          </div>
-        )}
+        {activeTab === 'insights' && <SpendingInsights expenses={expenses} currency={selectedCurrency} />}
 
-        {activeTab === "settings" && (
-          <div className="space-y-6">
-            <Card className="p-6 card-beautiful text-center">
-              <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Settings Coming Soon</h3>
-              <p className="text-muted-foreground">
-                Customize your ManiTracker experience with budget limits, categories, and more!
-              </p>
-            </Card>
-          </div>
+        {activeTab === 'settings' && (
+          <Card className="p-6 card-beautiful text-center">
+            <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Settings Coming Soon</h3>
+            <p className="text-muted-foreground">
+              Feature updates and customization options coming soon!
+            </p>
+          </Card>
         )}
-      </main>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card/90 backdrop-blur-sm border-t border-border/50">
-        <div className="max-w-4xl mx-auto">
-          <Navigation items={navigationItems} />
-        </div>
       </div>
 
-      {/* Bottom padding for navigation */}
-      <div className="h-20"></div>
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-border/50 z-50">
+        <div className="max-w-md mx-auto px-4 py-2">
+          <div className="flex justify-around">
+            {navigationItems.map((item) => (
+              <Button
+                key={item.name}
+                variant={activeTab === item.tab ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab(item.tab)}
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+              >
+                <item.icon className="h-4 w-4" />
+                <span className="text-xs">{item.name}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default Index;
+}

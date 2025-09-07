@@ -7,13 +7,16 @@ import { formatCurrency, type Currency } from "./currency-selector";
 
 export interface Expense {
   id: string;
-  storeName: string;
+  user_id: string;
+  store_name: string;
   amount: number;
   date: string;
-  items?: string[];
-  splitWith?: number;
-  userPortion?: number;
   category?: string;
+  items?: string[];
+  split_with?: number;
+  user_portion?: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ExpenseCardProps {
@@ -24,8 +27,8 @@ interface ExpenseCardProps {
 }
 
 export function ExpenseCard({ expense, onEdit, onDelete, currency }: ExpenseCardProps) {
-  const displayAmount = expense.userPortion || expense.amount;
-  const isSplit = expense.splitWith && expense.splitWith > 1;
+  const displayAmount = expense.user_portion || expense.amount;
+  const isSplit = expense.split_with && expense.split_with > 1;
 
   return (
     <Card className="p-4 card-beautiful">
@@ -40,7 +43,7 @@ export function ExpenseCard({ expense, onEdit, onDelete, currency }: ExpenseCard
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground truncate">
-                {expense.storeName}
+                {expense.store_name}
               </h3>
               <div className="text-right">
                 <p className="text-lg font-bold text-foreground">
@@ -65,7 +68,7 @@ export function ExpenseCard({ expense, onEdit, onDelete, currency }: ExpenseCard
             <div className="flex items-center gap-2 mt-2">
               {isSplit && (
                 <Badge variant="secondary" className="text-xs">
-                  Split {expense.splitWith} ways
+                  Split {expense.split_with} ways
                 </Badge>
               )}
               {expense.category && (
