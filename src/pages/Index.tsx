@@ -5,6 +5,7 @@ import { Navigation } from "@/components/ui/navigation";
 import { AddExpenseForm } from "@/components/add-expense-form";
 import { ExpenseCard, type Expense } from "@/components/expense-card";
 import { SpendingInsights } from "@/components/spending-insights";
+import { CurrencySelector, type Currency, formatCurrency } from "@/components/currency-selector";
 import { Plus, LayoutDashboard, BarChart3, Settings, Receipt } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import logo from "@/assets/logo.png";
@@ -12,6 +13,7 @@ import logo from "@/assets/logo.png";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [currency, setCurrency] = useState<Currency>('INR');
   const [expenses, setExpenses] = useState<Expense[]>([
     // Sample data
     {
@@ -112,10 +114,17 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <CurrencySelector 
+                currency={currency} 
+                onCurrencyChange={setCurrency}
+                className="w-20"
+              />
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-lg font-bold text-foreground">₹{monthlyTotal.toFixed(2)}</p>
+                <p className="text-lg font-bold text-foreground">{formatCurrency(monthlyTotal, currency)}</p>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -135,14 +144,14 @@ const Index = () => {
               <Card className="p-4 card-beautiful">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="text-2xl font-bold text-primary">₹{totalSpent.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-primary">{formatCurrency(totalSpent, currency)}</p>
                 </div>
               </Card>
               <Card className="p-4 card-beautiful">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Avg per Day</p>
                   <p className="text-2xl font-bold text-foreground">
-                    ₹{expenses.length > 0 ? (totalSpent / Math.max(1, 7)).toFixed(2) : "0.00"}
+                    {expenses.length > 0 ? formatCurrency(totalSpent / Math.max(1, 7), currency) : formatCurrency(0, currency)}
                   </p>
                 </div>
               </Card>
@@ -165,6 +174,7 @@ const Index = () => {
               <AddExpenseForm
                 onAddExpense={handleAddExpense}
                 onCancel={() => setShowAddForm(false)}
+                currency={currency}
               />
             )}
 
@@ -189,6 +199,7 @@ const Index = () => {
                       expense={expense}
                       onEdit={handleEditExpense}
                       onDelete={handleDeleteExpense}
+                      currency={currency}
                     />
                   ))
                 )}
@@ -203,7 +214,7 @@ const Index = () => {
               <BarChart3 className="h-6 w-6 text-primary" />
               <h2 className="text-2xl font-bold text-foreground">Spending Insights</h2>
             </div>
-            <SpendingInsights expenses={expenses} />
+            <SpendingInsights expenses={expenses} currency={currency} />
           </div>
         )}
 

@@ -8,11 +8,14 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon, Plus, Camera } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { CameraScanner } from "./camera-scanner";
+import { CurrencySelector, type Currency, getCurrencySymbol } from "./currency-selector";
 import type { Expense } from "./expense-card";
 
 interface AddExpenseFormProps {
   onAddExpense: (expense: Omit<Expense, 'id'>) => void;
   onCancel?: () => void;
+  currency: Currency;
 }
 
 const categories = [
@@ -26,8 +29,9 @@ const categories = [
   "Other"
 ];
 
-export function AddExpenseForm({ onAddExpense, onCancel }: AddExpenseFormProps) {
+export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseFormProps) {
   const { toast } = useToast();
+  const [showScanner, setShowScanner] = useState(false);
   const [formData, setFormData] = useState({
     storeName: "",
     amount: "",
@@ -77,11 +81,40 @@ export function AddExpenseForm({ onAddExpense, onCancel }: AddExpenseFormProps) 
       splitWith: "",
     });
 
+    const currencySymbol = getCurrencySymbol(currency);
     toast({
       title: "Expense Added",
-      description: `Successfully added expense for ₹${userPortion ? userPortion.toFixed(2) : amount.toFixed(2)}`,
+      description: `Successfully added expense for ${currencySymbol}${userPortion ? userPortion.toFixed(2) : amount.toFixed(2)}`,
     });
   };
+
+  const handleScanComplete = (scannedData: any) => {
+    // Pre-fill form with scanned data
+    setFormData(prev => ({
+      ...prev,
+      storeName: scannedData.storeName || prev.storeName,
+      amount: scannedData.amount ? scannedData.amount.toString() : prev.amount,
+      items: scannedData.items ? scannedData.items.join(', ') : prev.items,
+    }));
+    
+    setShowScanner(false);
+    
+    toast({
+      title: "Receipt Scanned!",
+      description: "Form has been pre-filled with the scanned data. Please review and submit.",
+    });
+  };
+
+  const currencySymbol = getCurrencySymbol(currency);
+
+  if (showScanner) {
+    return (
+      <CameraScanner
+        onScanComplete={handleScanComplete}
+        onClose={() => setShowScanner(false)}
+      />
+    );
+  }
 
   return (
     <Card className="p-6 card-beautiful">
@@ -90,8 +123,8 @@ export function AddExpenseForm({ onAddExpense, onCancel }: AddExpenseFormProps) 
         <Button
           variant="outline"
           size="sm"
-          className="gap-2"
-          onClick={() => toast({ title: "Coming Soon", description: "Receipt scanning feature will be available soon!" })}
+          className="gap-2 button-glow"
+          onClick={() => setShowScanner(true)}
         >
           <Camera className="h-4 w-4" />
           Scan Receipt
@@ -112,7 +145,7 @@ export function AddExpenseForm({ onAddExpense, onCancel }: AddExpenseFormProps) 
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (₹) *</Label>
+            <Label htmlFor="amount">Amount ({currencySymbol}) *</Label>
             <Input
               id="amount"
               type="number"
@@ -196,7 +229,7 @@ export function AddExpenseForm({ onAddExpense, onCancel }: AddExpenseFormProps) 
             />
             {formData.splitWith && formData.amount && (
               <p className="text-sm text-muted-foreground">
-                Your share: ₹{(parseFloat(formData.amount) / parseInt(formData.splitWith)).toFixed(2)}
+                Your share: {currencySymbol}{(parseFloat(formData.amount) / parseInt(formData.splitWith)).toFixed(2)}
               </p>
             )}
           </div>

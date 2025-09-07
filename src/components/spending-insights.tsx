@@ -1,13 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, AlertTriangle, Target } from "lucide-react";
+import { formatCurrency, type Currency } from "./currency-selector";
 import type { Expense } from "./expense-card";
 
 interface SpendingInsightsProps {
   expenses: Expense[];
+  currency: Currency;
 }
 
-export function SpendingInsights({ expenses }: SpendingInsightsProps) {
+export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) {
   // Calculate insights
   const totalSpent = expenses.reduce((sum, expense) => sum + (expense.userPortion || expense.amount), 0);
   const avgDaily = expenses.length > 0 ? totalSpent / Math.max(1, getDaysSinceFirstExpense(expenses)) : 0;
@@ -75,7 +77,7 @@ export function SpendingInsights({ expenses }: SpendingInsightsProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Spent</p>
-              <p className="text-2xl font-bold text-foreground">₹{totalSpent.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-foreground">{formatCurrency(totalSpent, currency)}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -87,7 +89,7 @@ export function SpendingInsights({ expenses }: SpendingInsightsProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Daily Average</p>
-              <p className="text-2xl font-bold text-foreground">₹{avgDaily.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-foreground">{formatCurrency(avgDaily, currency)}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
               <Target className="h-5 w-5 text-accent-foreground" />
@@ -129,7 +131,7 @@ export function SpendingInsights({ expenses }: SpendingInsightsProps) {
                 <Badge variant="secondary" className="text-sm">
                   {topCategory[0]}
                 </Badge>
-                <span className="font-semibold">₹{topCategory[1].toFixed(2)}</span>
+                <span className="font-semibold">{formatCurrency(topCategory[1], currency)}</span>
               </div>
             </div>
           )}
@@ -146,7 +148,7 @@ export function SpendingInsights({ expenses }: SpendingInsightsProps) {
                       </span>
                       <span className="text-sm font-medium">{store}</span>
                     </div>
-                    <span className="font-semibold">₹{amount.toFixed(2)}</span>
+                    <span className="font-semibold">{formatCurrency(amount, currency)}</span>
                   </div>
                 ))}
               </div>
@@ -164,7 +166,7 @@ export function SpendingInsights({ expenses }: SpendingInsightsProps) {
                 <li>• You spend a lot at {topStores[0][0]} - look for alternatives or bulk discounts</li>
               )}
               {avgDaily > 500 && (
-                <li>• Your daily average is ₹{avgDaily.toFixed(2)} - setting a daily budget might help</li>
+                <li>• Your daily average is {formatCurrency(avgDaily, currency)} - setting a daily budget might help</li>
               )}
               {trendChange > 20 && (
                 <li>• Your spending increased by {trendChange.toFixed(1)}% this week - try to identify unnecessary expenses</li>

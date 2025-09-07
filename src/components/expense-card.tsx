@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Edit, Trash2, Store } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency, type Currency } from "./currency-selector";
 
 export interface Expense {
   id: string;
@@ -19,9 +20,10 @@ interface ExpenseCardProps {
   expense: Expense;
   onEdit?: (expense: Expense) => void;
   onDelete?: (id: string) => void;
+  currency: Currency;
 }
 
-export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
+export function ExpenseCard({ expense, onEdit, onDelete, currency }: ExpenseCardProps) {
   const displayAmount = expense.userPortion || expense.amount;
   const isSplit = expense.splitWith && expense.splitWith > 1;
 
@@ -42,11 +44,11 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
               </h3>
               <div className="text-right">
                 <p className="text-lg font-bold text-foreground">
-                  ₹{displayAmount.toFixed(2)}
+                  {formatCurrency(displayAmount, currency)}
                 </p>
                 {isSplit && (
                   <p className="text-xs text-muted-foreground">
-                    of ₹{expense.amount.toFixed(2)}
+                    of {formatCurrency(expense.amount, currency)}
                   </p>
                 )}
               </div>
