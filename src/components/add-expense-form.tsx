@@ -21,9 +21,9 @@ interface AddExpenseFormProps {
     items?: string[];
     splitWith?: number;
     userPortion?: number;
+    currency: Currency;
   }) => void;
   onCancel?: () => void;
-  currency: Currency;
 }
 
 const categories = [
@@ -37,7 +37,7 @@ const categories = [
   "Other"
 ];
 
-export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseFormProps) {
+export function AddExpenseForm({ onAddExpense, onCancel }: AddExpenseFormProps) {
   const { toast } = useToast();
   const [showScanner, setShowScanner] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,6 +48,7 @@ export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseF
     items: "",
     isSplit: false,
     splitWith: "",
+    currency: 'USD' as Currency,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,6 +75,7 @@ export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseF
       items: formData.items ? formData.items.split(',').map(item => item.trim()) : undefined,
       splitWith,
       userPortion,
+      currency: formData.currency,
     };
 
     onAddExpense(expense);
@@ -87,9 +89,10 @@ export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseF
       items: "",
       isSplit: false,
       splitWith: "",
+      currency: 'USD' as Currency,
     });
 
-    const currencySymbol = getCurrencySymbol(currency);
+    const currencySymbol = getCurrencySymbol(formData.currency);
     toast({
       title: "Expense Added",
       description: `Successfully added expense for ${currencySymbol}${userPortion ? userPortion.toFixed(2) : amount.toFixed(2)}`,
@@ -113,7 +116,7 @@ export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseF
     });
   };
 
-  const currencySymbol = getCurrencySymbol(currency);
+  const currencySymbol = getCurrencySymbol(formData.currency);
 
   if (showScanner) {
     return (
@@ -225,21 +228,31 @@ export function AddExpenseForm({ onAddExpense, onCancel, currency }: AddExpenseF
         </div>
 
         {formData.isSplit && (
-          <div className="space-y-2">
-            <Label htmlFor="splitWith">Split between how many people?</Label>
-            <Input
-              id="splitWith"
-              type="number"
-              min="2"
-              value={formData.splitWith}
-              onChange={(e) => setFormData({ ...formData, splitWith: e.target.value })}
-              placeholder="2"
-            />
-            {formData.splitWith && formData.amount && (
-              <p className="text-sm text-muted-foreground">
-                Your share: {currencySymbol}{(parseFloat(formData.amount) / parseInt(formData.splitWith)).toFixed(2)}
-              </p>
-            )}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <CurrencySelector
+                currency={formData.currency}
+                onCurrencyChange={(currency) => setFormData({ ...formData, currency })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="splitWith">Split between how many people?</Label>
+              <Input
+                id="splitWith"
+                type="number"
+                min="2"
+                value={formData.splitWith}
+                onChange={(e) => setFormData({ ...formData, splitWith: e.target.value })}
+                placeholder="2"
+              />
+              {formData.splitWith && formData.amount && (
+                <p className="text-sm text-muted-foreground">
+                  Your share: {currencySymbol}{(parseFloat(formData.amount) / parseInt(formData.splitWith)).toFixed(2)}
+                </p>
+              )}
+            </div>
           </div>
         )}
 

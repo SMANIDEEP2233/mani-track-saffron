@@ -6,11 +6,15 @@ import type { Expense } from "./expense-card";
 
 interface SpendingInsightsProps {
   expenses: Expense[];
-  currency: Currency;
 }
 
-export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) {
-  // Calculate insights
+export function SpendingInsights({ expenses }: SpendingInsightsProps) {
+  // Detect if we have mixed currencies
+  const currencies = [...new Set(expenses.map(expense => expense.currency || 'USD'))];
+  const hasMixedCurrencies = currencies.length > 1;
+  const primaryCurrency = currencies[0] || 'USD';
+  
+  // Calculate insights (note: amounts are summed directly without conversion)
   const totalSpent = expenses.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
   const avgDaily = expenses.length > 0 ? totalSpent / Math.max(1, getDaysSinceFirstExpense(expenses)) : 0;
   
@@ -71,13 +75,26 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
 
   return (
     <div className="space-y-4">
+      {hasMixedCurrencies && (
+        <Card className="p-4 card-beautiful border-orange-200 bg-orange-50/50">
+          <div className="flex items-center gap-2 text-orange-800">
+            <AlertTriangle className="h-4 w-4" />
+            <p className="text-sm">
+              Mixed currencies detected ({currencies.join(', ')}). Amounts are summed without conversion.
+            </p>
+          </div>
+        </Card>
+      )}
+      
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 card-beautiful">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Spent</p>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(totalSpent, currency)}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {hasMixedCurrencies ? `~${totalSpent.toFixed(2)}` : formatCurrency(totalSpent, primaryCurrency as Currency)}
+              </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -89,7 +106,9 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Daily Average</p>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(avgDaily, currency)}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {hasMixedCurrencies ? `~${avgDaily.toFixed(2)}` : formatCurrency(avgDaily, primaryCurrency as Currency)}
+              </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
               <Target className="h-5 w-5 text-accent-foreground" />
@@ -131,7 +150,9 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
                 <Badge variant="secondary" className="text-sm">
                   {topCategory[0]}
                 </Badge>
-                <span className="font-semibold">{formatCurrency(topCategory[1], currency)}</span>
+                <span className="font-semibold">
+                  {hasMixedCurrencies ? `~${topCategory[1].toFixed(2)}` : formatCurrency(topCategory[1], primaryCurrency as Currency)}
+                </span>
               </div>
             </div>
           )}
@@ -148,7 +169,9 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
                       </span>
                       <span className="text-sm font-medium">{store}</span>
                     </div>
-                    <span className="font-semibold">{formatCurrency(amount, currency)}</span>
+                    <span className="font-semibold">
+                      {hasMixedCurrencies ? `~${amount.toFixed(2)}` : formatCurrency(amount, primaryCurrency as Currency)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -166,7 +189,7 @@ export function SpendingInsights({ expenses, currency }: SpendingInsightsProps) 
                 <li>• You spend a lot at {topStores[0][0]} - look for alternatives or bulk discounts</li>
               )}
               {avgDaily > 500 && (
-                <li>• Your daily average is {formatCurrency(avgDaily, currency)} - setting a daily budget might help</li>
+                <li>• Your daily average is high - setting a daily budget might help</li>
               )}
               {trendChange > 20 && (
                 <li>• Your spending increased by {trendChange.toFixed(1)}% this week - try to identify unnecessary expenses</li>

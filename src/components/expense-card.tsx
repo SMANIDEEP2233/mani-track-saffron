@@ -15,6 +15,7 @@ export interface Expense {
   items?: string[];
   split_with?: number;
   user_portion?: number;
+  currency: string;
   created_at: string;
   updated_at: string;
 }
@@ -23,12 +24,12 @@ interface ExpenseCardProps {
   expense: Expense;
   onEdit?: (expense: Expense) => void;
   onDelete?: (id: string) => void;
-  currency: Currency;
 }
 
-export function ExpenseCard({ expense, onEdit, onDelete, currency }: ExpenseCardProps) {
+export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
   const displayAmount = expense.user_portion || expense.amount;
   const isSplit = expense.split_with && expense.split_with > 1;
+  const currency = (expense.currency || 'USD') as Currency;
 
   return (
     <Card className="p-4 card-beautiful">

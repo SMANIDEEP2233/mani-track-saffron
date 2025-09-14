@@ -33,6 +33,7 @@ export default function Index() {
     items?: string[];
     splitWith?: number;
     userPortion?: number;
+    currency: string;
   }) => {
     await addExpense(newExpense);
     setShowAddExpense(false);
@@ -58,8 +59,11 @@ export default function Index() {
     { name: 'Settings', tab: 'settings' as const, icon: Settings },
   ];
 
-  // Calculate totals
-  const totalSpent = expenses.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
+  // Calculate totals in mixed currencies - convert to display currency for summary
+  const totalSpent = expenses.reduce((sum, expense) => {
+    // For now, just sum the amounts - in a real app you'd need currency conversion
+    return sum + (expense.user_portion || expense.amount);
+  }, 0);
   const currentMonth = new Date().toLocaleString('default', { month: 'long' });
   const currentYear = new Date().getFullYear();
   const monthlyExpenses = expenses.filter(expense => {
@@ -67,7 +71,10 @@ export default function Index() {
     return expenseDate.getMonth() === new Date().getMonth() && 
            expenseDate.getFullYear() === new Date().getFullYear();
   });
-  const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + (expense.user_portion || expense.amount), 0);
+  const monthlyTotal = monthlyExpenses.reduce((sum, expense) => {
+    // For now, just sum the amounts - in a real app you'd need currency conversion
+    return sum + (expense.user_portion || expense.amount);
+  }, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 pb-20">
@@ -90,11 +97,6 @@ export default function Index() {
             </div>
             
             <div className="flex items-center gap-2">
-              <CurrencySelector 
-                currency={selectedCurrency} 
-                onCurrencyChange={setSelectedCurrency}
-                className="w-[100px]"
-              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -166,7 +168,6 @@ export default function Index() {
               <AddExpenseForm
                 onAddExpense={handleAddExpense}
                 onCancel={() => setShowAddExpense(false)}
-                currency={selectedCurrency}
               />
             )}
 
@@ -193,7 +194,6 @@ export default function Index() {
                       expense={expense}
                       onEdit={handleEditExpense}
                       onDelete={handleDeleteExpense}
-                      currency={selectedCurrency}
                     />
                   ))}
                 </div>
@@ -202,7 +202,7 @@ export default function Index() {
           </div>
         )}
 
-        {activeTab === 'insights' && <SpendingInsights expenses={expenses} currency={selectedCurrency} />}
+        {activeTab === 'insights' && <SpendingInsights expenses={expenses} />}
 
         {activeTab === 'settings' && <ApiKeySettings />}
       </div>

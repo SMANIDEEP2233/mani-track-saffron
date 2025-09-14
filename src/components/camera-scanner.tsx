@@ -125,20 +125,31 @@ export function CameraScanner({ onScanComplete, onClose }: CameraScannerProps) {
             })
           });
           
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Google Vision API HTTP Error:', response.status, errorData);
+            throw new Error(`Google Vision API HTTP error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+          }
+          
           const result = await response.json();
+          console.log('Google Vision API Response:', result);
+          
           if (result.responses?.[0]?.fullTextAnnotation?.text) {
             extractedText = result.responses[0].fullTextAnnotation.text;
             console.log('Google Vision API Text:', extractedText);
           } else if (result.responses?.[0]?.error) {
+            console.error('Google Vision API Response Error:', result.responses[0].error);
             throw new Error(`Google Vision API error: ${result.responses[0].error.message}`);
           } else {
+            console.log('No text detected by Google Vision API, trying Tesseract...');
             throw new Error('No text detected by Google Vision API');
           }
         } catch (visionError) {
-          console.warn('Google Vision API failed, falling back to Tesseract:', visionError);
+          console.error('Google Vision API failed, falling back to Tesseract:', visionError);
           toast({
-            title: "Fallback Processing",
-            description: "Google Vision API failed, using basic OCR...",
+            title: "API Processing Failed",
+            description: `Google Vision API error: ${visionError.message}. Using basic OCR...`,
+            variant: "destructive",
           });
           
           // Fall back to Tesseract

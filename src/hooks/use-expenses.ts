@@ -13,6 +13,7 @@ export interface Expense {
   items?: string[];
   split_with?: number;
   user_portion?: number;
+  currency: string;
   created_at: string;
   updated_at: string;
 }
@@ -81,6 +82,7 @@ export function useExpenses() {
     items?: string[];
     splitWith?: number;
     userPortion?: number;
+    currency: string;
   }) => {
     if (!user) {
       toast({
@@ -103,6 +105,7 @@ export function useExpenses() {
           items: expenseData.items,
           split_with: expenseData.splitWith,
           user_portion: expenseData.userPortion,
+          currency: expenseData.currency,
         })
         .select()
         .single();
