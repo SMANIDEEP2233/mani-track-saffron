@@ -7,6 +7,7 @@ import { ExpenseCard, type Expense } from "@/components/expense-card";
 import { SpendingInsights } from "@/components/spending-insights";
 import { CurrencySelector, type Currency, formatCurrency } from "@/components/currency-selector";
 import { AuthForm } from "@/components/auth/auth-form";
+import { ApiKeySettings } from "@/components/api-key-settings";
 import { useExpenses } from "@/hooks/use-expenses";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/logo.png";
@@ -203,15 +204,7 @@ export default function Index() {
 
         {activeTab === 'insights' && <SpendingInsights expenses={expenses} currency={selectedCurrency} />}
 
-        {activeTab === 'settings' && (
-          <Card className="p-6 card-beautiful text-center">
-            <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Settings Coming Soon</h3>
-            <p className="text-muted-foreground">
-              Feature updates and customization options coming soon!
-            </p>
-          </Card>
-        )}
+        {activeTab === 'settings' && <ApiKeySettings />}
       </div>
 
       {/* Bottom Navigation */}
