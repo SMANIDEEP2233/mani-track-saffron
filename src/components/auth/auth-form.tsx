@@ -19,21 +19,16 @@ export function AuthForm() {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Check your email',
-        description: 'We sent you a confirmation link to complete your registration.',
+        title: 'Account created!',
+        description: 'You have been successfully signed up and logged in.',
       });
     } catch (error: any) {
       toast({
