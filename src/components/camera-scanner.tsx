@@ -91,39 +91,104 @@ export function CameraScanner({ onScanComplete, onClose }: CameraScannerProps) {
 
   const processImage = async (imageData: string) => {
     setIsProcessing(true);
-    
     try {
-      toast({
-        title: "Processing Receipt",
-        description: "Extracting text from your receipt...",
-      });
+      console.log('Processing image with OCR...');
+      
+      // Check if Google Vision API key is available
+      const googleApiKey = localStorage.getItem("googleApiKey");
+      
+      let extractedText = "";
+      
+      if (googleApiKey) {
+        // Use Google Vision API for better accuracy
+        try {
+          toast({
+            title: "Processing Receipt",
+            description: "Using Google Vision API for enhanced accuracy...",
+          });
 
-      const { data: { text } } = await Tesseract.recognize(
-        imageData,
-        'eng',
-        {
+          const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${googleApiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              requests: [{
+                image: {
+                  content: imageData.split(',')[1] // Remove data:image/jpeg;base64, prefix
+                },
+                features: [
+                  { type: 'TEXT_DETECTION' },
+                  { type: 'DOCUMENT_TEXT_DETECTION' }
+                ]
+              }]
+            })
+          });
+          
+          const result = await response.json();
+          if (result.responses?.[0]?.fullTextAnnotation?.text) {
+            extractedText = result.responses[0].fullTextAnnotation.text;
+            console.log('Google Vision API Text:', extractedText);
+          } else if (result.responses?.[0]?.error) {
+            throw new Error(`Google Vision API error: ${result.responses[0].error.message}`);
+          } else {
+            throw new Error('No text detected by Google Vision API');
+          }
+        } catch (visionError) {
+          console.warn('Google Vision API failed, falling back to Tesseract:', visionError);
+          toast({
+            title: "Fallback Processing",
+            description: "Google Vision API failed, using basic OCR...",
+          });
+          
+          // Fall back to Tesseract
+          const { data: { text } } = await Tesseract.recognize(imageData, 'eng', {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                console.log('Tesseract progress:', m);
+              }
+            }
+          });
+          extractedText = text;
+        }
+      } else {
+        // Use Tesseract OCR as fallback
+        toast({
+          title: "Processing Receipt",
+          description: "Extracting text from your receipt...",
+        });
+        
+        const { data: { text } } = await Tesseract.recognize(imageData, 'eng', {
           logger: m => {
             if (m.status === 'recognizing text') {
-              // Optional: show progress
+              console.log('Tesseract progress:', m);
             }
           }
-        }
-      );
-
-      const scannedData = parseReceiptText(text);
+        });
+        extractedText = text;
+        
+        toast({
+          title: "Using Basic OCR",
+          description: "Add Google Vision API key in settings for better accuracy.",
+        });
+      }
+      
+      console.log('Extracted Text:', extractedText);
+      
+      const parsedData = parseReceiptText(extractedText);
+      console.log('Parsed Data:', parsedData);
       
       toast({
-        title: "Receipt Scanned!",
-        description: `Found ${scannedData.storeName || 'store'} with amount ${scannedData.amount ? `₹${scannedData.amount}` : 'detected'}`,
+        title: "Receipt Scanned Successfully!",
+        description: `Found ${parsedData.storeName || 'store'} with amount ${parsedData.amount ? `$${parsedData.amount}` : 'detected'}`,
       });
-
-      onScanComplete(scannedData);
       
+      onScanComplete(parsedData);
     } catch (error) {
-      console.error('OCR Error:', error);
+      console.error('Error processing image:', error);
       toast({
-        title: "Scanning Failed",
-        description: "Could not process the receipt. Please try again or enter manually.",
+        title: "Processing Error",
+        description: "Failed to process the image. Please try again.",
         variant: "destructive",
       });
     } finally {
